@@ -96,20 +96,20 @@ module ActiveScaffold::Actions
     end
     
     def do_refresh_list
-      do_search if respond_to? :do_search
+      do_search if respond_to? :do_search, true
       do_list
     end
 
     def each_record_in_page
       _page = active_scaffold_config.list.user.page
-      do_search if respond_to? :do_search
+      do_search if respond_to? :do_search, true
       active_scaffold_config.list.user.page = _page
       do_list
       @page.items.each {|record| yield record}
     end
 
     def each_record_in_scope
-      do_search if respond_to? :do_search
+      do_search if respond_to? :do_search, true
       append_to_query(beginning_of_chain, finder_options).all.each {|record| yield record}
     end
 
