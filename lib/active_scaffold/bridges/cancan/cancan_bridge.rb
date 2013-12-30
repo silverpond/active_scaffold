@@ -10,8 +10,9 @@
 module CanCan
   module Ability
     def as_action_aliases
-      alias_action :list, :show_search, :render_field, :to => :read
-      alias_action :update_column, :edit_associated, :new_existing, :add_existing, :to => :update
+      alias_action :list, :row, :show_search, :render_field, :to => :read
+      alias_action :update_column, :add_association, :edit_associated, 
+        :edit_associated, :new_existing, :add_existing, :to => :update
       alias_action :delete, :destroy_existing, :to => :destroy
     end
   end
@@ -35,12 +36,6 @@ module ActiveScaffold::Bridges
           :class => active_scaffold_config.model,
           :instance => :record
         )
-      end
-    end
-
-    module AssociationHelpers
-      def association_klass_scoped(association, klass, record)
-        super.accessible_by(current_ability, :read)
       end
     end
 

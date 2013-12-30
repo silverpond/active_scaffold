@@ -1,30 +1,34 @@
 class ConstMocker
-  def initialize(const_name, parent = Object)
-    @parent = parent
-    @const_name = const_name
-    @const_state = nil
-    @const_state = @parent.const_defined?(@const_name) ? @parent.const_get(@const_name) : nil
+  def initialize(*const_names)
+    @const_names = const_names
+    @const_states = {}
+    @const_names.each{|const_name|
+      @const_states[const_name] = Object.const_defined?(const_name) ? Object.const_get(const_name) : nil
+    }
   end
   
   def remove
-    @parent.send :remove_const, @const_name if @parent.const_defined?(@const_name)
+    @const_names.each{|const_name|
+      Object.send :remove_const, const_name if Object.const_defined?(const_name)
+    }
   end
   
   def declare
-    @parent.const_set @const_name, Class.new
+    @const_names.each{|const_name|
+      Object.class_eval "class #{const_name}; end;" unless Object.const_defined?(const_name)
+    }
   end
   
   def restore
     remove
-    @parent.const_set @const_name, @const_state if @const_state
-  end
-
-  def const
-    @parent.const_get @const_name if @parent.const_defined?(@const_name)
+    
+    @const_states.each_pair{|const_name, const|
+      Object.const_set const_name, const if const
+    }
   end
   
-  def self.mock(const_name, parent = Object, &block)
-    cm = new(const_name, parent)
+  def self.mock(*const_names, &block)
+    cm = new(*const_names)
     yield(cm)
     cm.restore
     true

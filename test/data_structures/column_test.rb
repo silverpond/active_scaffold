@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.join(File.dirname(__FILE__), '../test_helper.rb')
 
 class ColumnTest < Test::Unit::TestCase
   def setup
@@ -121,9 +121,9 @@ class ColumnTest < Test::Unit::TestCase
 
   def test_custom_search
     @column.search_sql = true
-    assert_equal ['"model_stubs"."a"'], @column.search_sql
+    assert_equal '"model_stubs"."a"', @column.search_sql
     @column.search_sql = 'foobar'
-    assert_equal ['foobar'], @column.search_sql
+    assert_equal 'foobar', @column.search_sql
     assert @column.searchable?
   end
 
@@ -172,7 +172,7 @@ class ColumnTest < Test::Unit::TestCase
   end
 
   def test_includes
-    assert_equal nil, @column.includes
+    assert_equal [], @column.includes
     
     # make sure that when a non-array comes in, an array comes out
     @column.includes = :column_name
@@ -181,9 +181,5 @@ class ColumnTest < Test::Unit::TestCase
     # make sure that when a non-array comes in, an array comes out
     @column.includes = [:column_name]
     assert_equal([:column_name], @column.includes)
-
-    # make sure that when a non-array comes in, an array comes out
-    @column.includes = nil
-    assert_nil @column.includes
   end
 end

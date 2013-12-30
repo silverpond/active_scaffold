@@ -1,9 +1,7 @@
-require 'test_helper'
+require File.join(File.dirname(__FILE__), '../test_helper.rb')
 
 class PermissionModel < ActiveRecord::Base
-  include ActiveScaffold::ActiveRecordPermissions::ModelUserAccess::Model
   def self.columns; [] end
-  def self.column_types; [] end
 
   def authorized_for_read?; true; end
   def authorized_for_update?; false; end
@@ -61,9 +59,7 @@ class ActiveRecordPermissionsTest < Test::Unit::TestCase
   #   columns are: crud_type method, column method, crud_type/column method
   #   symbols are: is (a)bsent, returns (f)alse, returns (t)rue, or n/a (_)
   def test_method_combinations_with_default_true
-    ActiveScaffold.set_defaults do |config|
-      config.security.default_permission = true
-    end
+    ActiveRecordPermissions.default_permission = true
 
     pass(@model.authorized_for?(:column => :a3), '_a_')
     fail(@model.authorized_for?(:column => :a2), '_f_')
@@ -105,9 +101,7 @@ class ActiveRecordPermissionsTest < Test::Unit::TestCase
   end
 
   def test_method_combinations_with_default_false
-    ActiveScaffold.set_defaults do |config|
-      config.security.default_permission = false
-    end
+    ActiveRecordPermissions.default_permission = false
 
     fail(@model.authorized_for?(:column => :a3), '_a_')
     fail(@model.authorized_for?(:column => :a2), '_f_')

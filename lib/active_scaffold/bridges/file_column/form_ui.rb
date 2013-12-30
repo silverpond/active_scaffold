@@ -5,10 +5,9 @@ module ActiveScaffold
       def active_scaffold_input_file_column(column, options)
        if @record.send(column.name) 
           # we already have a value? display the form for deletion.
-          case ActiveScaffold.js_framework
-          when :jquery
-            remove_file_js = "jQuery(this).prev().val('true'); jQuery(this).parent().hide().next().show(); return false;";
-          when :prototype
+          if ActiveScaffold.js_framework == :jquery
+            remove_file_js = "$(this).prev().val('true'); $(this).parent().hide().next().show(); return false;";
+          else
             remove_file_js = "$(this).previous().value='true'; p=$(this).up(); p.hide(); p.next().show(); return false;";
           end            
           

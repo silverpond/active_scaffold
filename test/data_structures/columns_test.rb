@@ -1,4 +1,5 @@
-require 'test_helper'
+require File.join(File.dirname(__FILE__), '../test_helper.rb')
+# require 'test/model_stub'
 
 class ColumnsTest < Test::Unit::TestCase
   def setup

@@ -25,7 +25,7 @@ module ActiveScaffold::Config
     # Add a nested ActionLink
     def add_link(attribute, options = {})
       column = @core.columns[attribute.to_sym]
-      if column && column.association
+      unless column.nil? || column.association.nil?
         label = if column.polymorphic_association?
           column.label
         else
@@ -35,11 +35,8 @@ module ActiveScaffold::Config
         action_group = options.delete(:action_group) || self.action_group
         action_link = @core.link_for_association(column, options)
         @core.action_links.add_to_group(action_link, action_group) unless action_link.nil?
-        action_link
-      elsif column.nil?
-        raise ArgumentError.new("unknown column #{attribute}")
-      elsif column.association.nil?
-        raise ArgumentError.new("column #{attribute} is not an association")
+      else
+        # TODO: raise exception
       end
     end
     

@@ -1,5 +1,5 @@
 # a simple (manual) unsaved? flag and method. at least it automatically reverts after a save!
-module ActiveScaffold::UnsavedRecord
+class ActiveRecord::Base
   # acts like a dirty? flag, manually thrown during update_record_from_params.
   def unsaved=(val)
     @unsaved = (val) ? true : false
@@ -11,8 +11,10 @@ module ActiveScaffold::UnsavedRecord
   end
 
   # automatically unsets the unsaved flag
-  def save(*)
-    super.tap { self.unsaved = false }
+  def save_with_unsaved_flag(*args)
+    result = save_without_unsaved_flag(*args)
+    self.unsaved = false
+    return result
   end
+  alias_method_chain :save, :unsaved_flag
 end
-ActiveRecord::Base.class_eval { include ActiveScaffold::UnsavedRecord }

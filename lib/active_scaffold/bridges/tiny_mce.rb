@@ -1,7 +1,6 @@
 class ActiveScaffold::Bridges::TinyMce < ActiveScaffold::DataStructures::Bridge
-  autoload :Helpers, 'active_scaffold/bridges/tiny_mce/helpers.rb'
   def self.install
-    ActionView::Base.class_eval { include ActiveScaffold::Bridges::TinyMce::Helpers }
+    require File.join(File.dirname(__FILE__), "tiny_mce/helpers.rb")
   end
 
   def self.install?
@@ -9,10 +8,9 @@ class ActiveScaffold::Bridges::TinyMce < ActiveScaffold::DataStructures::Bridge
   end
  
   def self.javascripts
-    case ActiveScaffold.js_framework
-    when :jquery
+    if ActiveScaffold.js_framework == :jquery
       ['tinymce-jquery', 'jquery/tiny_mce_bridge']
-    when :prototype
+    else
       ['tinymce', 'prototype/tiny_mce_bridge']
     end
   end

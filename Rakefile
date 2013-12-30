@@ -10,10 +10,11 @@ end
 Bundler::GemHelper.install_tasks
 require 'rake/testtask'
 require 'rdoc/task'
+require 'find'
 
 desc 'Test ActiveScaffold.'
 Rake::TestTask.new(:test) do |t|
-  t.libs << 'lib' << 'test'
+  t.libs << 'lib'
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end

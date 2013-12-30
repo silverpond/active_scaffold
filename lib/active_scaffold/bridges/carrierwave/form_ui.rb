@@ -2,7 +2,7 @@ module ActiveScaffold
   module Helpers
     module FormColumnHelpers
       def active_scaffold_input_carrierwave(column, options)
-        options = active_scaffold_input_text_options(options.merge(column.options))
+        options = active_scaffold_input_text_options(options)
         carrierwave = @record.send("#{column.name}")
         if !carrierwave.file.blank?
 
@@ -17,11 +17,10 @@ module ActiveScaffold
             :id => options[:id] + '_cache'
           }
 
-          case ActiveScaffold.js_framework
-          when :jquery
-            js_remove_file_code = "jQuery(this).prev('input#remove_#{options[:id]}').val('true'); jQuery(this).parent().hide().next().show(); return false;";
-            js_dont_remove_file_code = "jQuery(this).parents('div.carrierwave_controls').find('input#remove_#{options[:id]}').val('false'); return false;";
-          when :prototype
+          if ActiveScaffold.js_framework == :jquery
+            js_remove_file_code = "$(this).prev('input#remove_#{options[:id]}').val('true'); $(this).parent().hide().next().show(); return false;";
+            js_dont_remove_file_code = "$(this).parents('div.carrierwave_controls').find('input#remove_#{options[:id]}').val('false'); return false;";
+          else
             js_remove_file_code = "$(this).previous('input#remove_#{options[:id]}').value='true'; $(this).up().hide().next().show(); return false;";
             js_dont_remove_file_code = "$(this).up('div.carrierwave_controls').down('input#remove_#{options[:id]}').value='false'; return false;";
           end

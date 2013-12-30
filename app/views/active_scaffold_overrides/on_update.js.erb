@@ -1,5 +1,5 @@
 try {
-<% form_selector = "#{element_form_id(:action => :update, :id => @record.try(:id) || params[:id])}" %>
+<% form_selector = "#{element_form_id(:action => :update)}" %>
 var action_link = ActiveScaffold.find_action_link('<%= form_selector %>');
 action_link.update_flash_messages('<%= escape_javascript(render(:partial => 'messages')) %>');
 <% if controller.send :successful? %>
@@ -8,7 +8,6 @@ action_link.update_flash_messages('<%= escape_javascript(render(:partial => 'mes
     ActiveScaffold.update_row('<%= row_selector %>', '<%= escape_javascript(render(:partial => 'list_record', :locals => {:record => @record})) %>');
     action_link.target = $('#<%= row_selector %>');
     <%= render :partial => 'update_calculations', :formats => [:js] %>
-    <%= "ActiveScaffold.enable_form('#{form_selector}');" if params[:iframe] == 'true' %>
   <% else %>
     <% if render_parent? %>
       <% if nested_singular_association? || render_parent_action == :row %>
@@ -19,12 +18,7 @@ action_link.update_flash_messages('<%= escape_javascript(render(:partial => 'mes
     <% elsif update_refresh_list? %>
       <%= render :partial => 'refresh_list' %>
     <% else %>
-      <% if @record %>
       action_link.close('<%= escape_javascript(render(:partial => 'list_record', :locals => {:record => @record})) %>');
-      <% else %>
-      action_link.close();
-      ActiveScaffold.delete_record_row('<%= element_row_id(:action => :list, :id => params[:id]) %>');
-      <% end %>
       <%= render :partial => 'update_calculations', :formats => [:js] %>
     <% end %>
   <% end %>

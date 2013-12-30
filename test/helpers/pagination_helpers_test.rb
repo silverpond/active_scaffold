@@ -1,11 +1,7 @@
-require 'test_helper'
+require File.join(File.dirname(__FILE__), '../test_helper.rb')
 
 class PaginationHelpersTest < Test::Unit::TestCase
   include ActiveScaffold::Helpers::PaginationHelpers
-
-  def active_scaffold_config
-    @config ||= config_for('model_stub')
-  end
 
   def test_links
     self.stubs(:pagination_ajax_link).returns('l')
@@ -54,10 +50,10 @@ class PaginationHelpersTest < Test::Unit::TestCase
   def links(current, last_page, window_size = 2, infinite = false)
     paginator = stub(:last => last_page = stub(:number => last_page), :infinite? => infinite)
     current_page = stub(:number => current, :pager => paginator)
-    pagination_ajax_links(current_page, {}, {}, window_size, 0)
+    pagination_ajax_links(current_page, {}, window_size)
   end
 
-  def content_tag(tag, text, *args)
+  def content_tag(tag, text)
     text
   end
 end

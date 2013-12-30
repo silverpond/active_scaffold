@@ -5,10 +5,7 @@ module ActiveScaffold::Bridges
       require File.join(File.dirname(__FILE__), "date_picker/ext.rb")
     end
     def self.install?
-      ActiveScaffold.js_framework == :jquery && jquery_ui_included?
-    end
-    def self.jquery_ui_included?
-      Jquery::Rails.const_defined?('JQUERY_UI_VERSION') || Jquery.const_defined?('Ui') if Object.const_defined?('Jquery')
+      ActiveScaffold.js_framework == :jquery
     end
     def self.localization
       "jQuery(function($){

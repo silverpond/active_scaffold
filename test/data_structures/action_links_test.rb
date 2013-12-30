@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.join(File.dirname(__FILE__), '../test_helper.rb')
 
 class ActionLinksTest < Test::Unit::TestCase
   def setup
@@ -53,10 +53,10 @@ class ActionLinksTest < Test::Unit::TestCase
     @links.add 'foo', :type => :collection
     @links.add 'bar', :type => :member
 
-    @links.collection.each do |link|
+    @links.each :collection do |link|
       assert_equal 'foo', link.action
     end
-    @links.member.each do |link|
+    @links.each :member do |link|
       assert_equal 'bar', link.action
     end
   end
@@ -69,7 +69,7 @@ class ActionLinksTest < Test::Unit::TestCase
     assert @links['foo'].nil?
     begin
       @links.delete :foo
-      @links.delete 'foo'
+    @links.delete 'foo'
     rescue
       assert false, "deleting from action links when item doesn't exist should not throw an error"
     end

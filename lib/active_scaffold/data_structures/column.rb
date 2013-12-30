@@ -22,9 +22,6 @@ module ActiveScaffold::DataStructures
     # Whether to enable add_existing for this column
     attr_accessor :allow_add_existing
     
-    # What columns load from main table
-    attr_accessor :select_columns
-    
     # Any extra parameters this particular column uses.  This is for create/update purposes.
     def params
       # lazy initialize
@@ -108,19 +105,12 @@ module ActiveScaffold::DataStructures
     # supported options:
     #   * for association columns
     #     * :select - displays a simple <select> or a collection of checkboxes to (dis)associate records
-    def form_ui=(value)
-      self.list_method = nil if @list_ui.nil? && value != @form_ui
-      @form_ui = value
-    end
+    attr_writer :form_ui
     def form_ui
       @form_ui
     end
 
-    def list_ui=(value)
-      self.list_method = nil if value != @list_ui
-      @list_ui = value
-    end
-
+    attr_writer :list_ui
     def list_ui
       @list_ui || @form_ui
     end
@@ -177,42 +167,26 @@ module ActiveScaffold::DataStructures
     def includes=(value)
       @includes = case value
         when Array then value 
-        else value ? [value] : value # not convert nil to [nil]
-      end
-    end
-
-    # a collection of associations to do left join when this column is included on search
-    def search_joins
-      @search_joins || @includes
-    end
-
-    def search_joins=(value)
-      @search_joins = case value
-        when Array then value 
         else [value] # automatically convert to an array
       end
     end
 
     # a collection of columns to load when eager loading is disabled, if it's nil all columns will be loaded
-    attr_accessor :select_associated_columns
+    attr_accessor :select_columns
 
     # describes how to search on a column
     #   search = true           default, uses intelligent search sql
     #   search = "CONCAT(a, b)" define your own sql for searching. this should be the "left-side" of a WHERE condition. the operator and value will be supplied by ActiveScaffold.
     #   search = [:a, :b]       searches in both fields
     def search_sql=(value)
-      @search_sql = if value
-        (value == true || value.is_a?(Proc)) ? value : Array(value)
-      else
-        value
-      end
+      @search_sql = (value == true || value.is_a?(Proc)) ? value : Array(value)
     end
     def search_sql
       self.initialize_search_sql if @search_sql === true
       @search_sql
     end
     def searchable?
-      !!search_sql
+      search_sql != false && search_sql != nil
     end
 
     # to modify the default order of columns
@@ -237,7 +211,7 @@ module ActiveScaffold::DataStructures
     attr_writer :show_blank_record
     def show_blank_record?(associated)
       if @show_blank_record
-        return false unless self.association.klass.authorized_for?(:crud_type => :create) and not self.association.options[:readonly]
+        return false unless self.association.klass.authorized_for?(:crud_type => :create)
         self.plural_association? or (self.singular_association? and associated.blank?)
       end
     end
@@ -260,16 +234,16 @@ module ActiveScaffold::DataStructures
     # the association from the ActiveRecord class
     attr_reader :association
     def singular_association?
-      self.association and !self.association.collection?
+      self.association and [:has_one, :belongs_to].include? self.association.macro
     end
     def plural_association?
-      self.association and self.association.collection?
+      self.association and [:has_many, :has_and_belongs_to_many].include? self.association.macro
     end
     def through_association?
       self.association and self.association.options[:through]
     end
     def polymorphic_association?
-      self.association and self.association.options.has_key? :polymorphic # TODO use polymorphic? when rails3 support is removed
+      self.association and self.association.options.has_key? :polymorphic and self.association.options[:polymorphic]
     end
     def readonly_association?
       if self.association
@@ -319,24 +293,6 @@ module ActiveScaffold::DataStructures
       @show_blank_record = self.class.show_blank_record
       @send_form_on_update_column = self.class.send_form_on_update_column
       @actions_for_association_links = self.class.actions_for_association_links.clone if @association
-      @select_columns = if @association.nil? && @column
-        [field]
-      elsif polymorphic_association?
-        [field, quoted_field(@active_record_class.connection.quote_column_name(@association.foreign_type))]
-      elsif @association
-        if self.association.belongs_to?
-          [field]
-        else
-          columns = []
-          if active_record_class.columns_hash[count_column = "#{@association.name}_count"]
-            columns << quoted_field(@active_record_class.connection.quote_column_name(count_column))
-          end
-          if @association.through_reflection.try(:belongs_to?)
-            columns << quoted_field(@active_record_class.connection.quote_column_name(@association.through_reflection.foreign_key))
-          end
-          columns
-        end
-      end
       
       self.number = @column.try(:number?)
       @options = {:format => :i18n_number} if self.number?
@@ -349,8 +305,8 @@ module ActiveScaffold::DataStructures
       # default all the configurable variables
       self.css_class = ''
       self.required = active_record_class.validators_on(self.name).any? do |val|
-        !val.options[:if] && !val.options[:unless] && (ActiveModel::Validations::PresenceValidator === val ||
-          (ActiveModel::Validations::InclusionValidator === val && !val.options[:allow_nil] && !val.options[:allow_blank])
+        ActiveModel::Validations::PresenceValidator === val or (
+          ActiveModel::Validations::InclusionValidator === val and not val.options[:allow_nil] and not val.options[:allow_blank]
         )
       end
       self.sort = true
@@ -358,10 +314,7 @@ module ActiveScaffold::DataStructures
       
       @weight = estimate_weight
 
-      if association && !polymorphic_association?
-        self.includes = [association.name]
-        self.search_joins = self.includes.clone
-      end
+      self.includes = (association and not polymorphic_association?) ? [association.name] : []
     end
 
     # just the field (not table.field)
@@ -403,14 +356,10 @@ module ActiveScaffold::DataStructures
 
     # the table.field name for this column, if applicable
     def field
-      @field ||= quoted_field(field_name)
+      @field ||= [@active_record_class.quoted_table_name, field_name].join('.')
     end
 
     protected
-
-    def quoted_field(name)
-      [@active_record_class.quoted_table_name, name].join('.')
-    end
 
     def initialize_sort
       if self.virtual?
