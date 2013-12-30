@@ -28,6 +28,7 @@ module ActiveRecord
 
           # stage 1 filter: collect associations that point back to this model and use the same foreign_key
           klass.reflect_on_all_associations.each do |assoc|
+            next if assoc == self
             if self.options[:through]
               # only iterate has_many :through associations
               next unless assoc.options[:through]
@@ -35,7 +36,7 @@ module ActiveRecord
             else
               # skip over has_many :through associations
               next if assoc.options[:through]
-              next unless assoc.options[:polymorphic] or assoc.class_name.constantize == self.active_record
+              next unless assoc.options[:polymorphic] or assoc.class_name == self.active_record.name
 
               case [assoc.macro, self.macro].find_all{|m| m == :has_and_belongs_to_many}.length
                 # if both are a habtm, then match them based on the join table

@@ -3,22 +3,27 @@ module ActiveScaffold::DataStructures
   class Sorting
     include Enumerable
 
+    attr_accessor :constraint_columns
+
     def initialize(columns)
       @columns = columns
       @clauses = []
+      @constraint_columns = []
     end
     
     def set_default_sorting(model)
       model_scope = model.send(:build_default_scope)
       order_clause = model_scope.arel.order_clauses.join(",") if model_scope
 
-      # If an ORDER BY clause is found set default sorting according to it, else
       # fallback to setting primary key ordering
+      if model.column_names.include?(model.primary_key)
+        set(model.primary_key, 'ASC')
+        @sorting_by_primary_key = clause
+      end
+      # If an ORDER BY clause is found set default sorting according to it
       if order_clause
         set_sorting_from_order_clause(order_clause, model.table_name)
         @default_sorting = true
-      else
-        set(model.primary_key, 'ASC') if model.column_names.include?(model.primary_key)
       end
     end
 
@@ -32,8 +37,9 @@ module ActiveScaffold::DataStructures
       direction ||= 'ASC'
       direction = direction.to_s.upcase
       column = get_column(column_name)
+      raise ArgumentError, "Could not find column #{column_name}" if column.nil?
       raise ArgumentError, "Sorting direction unknown" unless [:ASC, :DESC].include? direction.to_sym
-      @clauses << [column, direction.untaint] if column and column.sortable?
+      @clauses << [column, direction.untaint] if column.sortable?
       raise ArgumentError, "Can't mix :method- and :sql-based sorting" if mixed_sorting?
     end
 
@@ -65,6 +71,13 @@ module ActiveScaffold::DataStructures
       clause[1]
     end
 
+    SORTING_STAGES = Hash[%w(reset ASC DESC reset).each_cons(2).map{|a|a}].freeze
+    DEFAULT_SORTING_STAGES = Hash[%w(ASC DESC ASC).each_cons(2).map{|a|a}].freeze
+    def next_sorting_of(column, sorted_by_default)
+      stages = sorted_by_default ? DEFAULT_SORTING_STAGES : SORTING_STAGES
+      stages[direction_of(column)] || 'ASC'
+    end
+
     # checks whether any column is configured to sort by method (using a proc)
     def sorts_by_method?
       @clauses.any? { |sorting| sorting[0].sort.is_a? Hash and sorting[0].sort.has_key? :method }
@@ -91,12 +104,14 @@ module ActiveScaffold::DataStructures
       # unless the sorting is by method, create the sql string
       order = []
       each do |sort_column, sort_direction|
+        next if constraint_columns.include? sort_column.name
         sql = sort_column.sort[:sql]
         next if sql.nil? or sql.empty?
 
         order << Array(sql).map {|column| "#{column} #{sort_direction}"}.join(', ')
       end
 
+      order << @sorting_by_primary_key if @sorting_by_primary_key # mandatory for postgres
       order unless order.empty?
     end
 
@@ -130,7 +145,7 @@ module ActiveScaffold::DataStructures
       order_clause.to_s.split(',').each do |criterion|
         unless criterion.blank?
           order_parts = extract_order_parts(criterion)
-          add(order_parts[:column_name], order_parts[:direction]) unless different_table?(model_table_name, order_parts[:table_name])
+          add(order_parts[:column_name], order_parts[:direction]) unless different_table?(model_table_name, order_parts[:table_name]) || get_column(order_parts[:column_name]).nil?
         end
       end
     end

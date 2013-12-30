@@ -13,8 +13,9 @@ margin: 5px 0;
 
 .active-scaffold table {
 width: 100%;
-border-collapse: separate;
+border-collapse: collapse;
 }
+.active-scaffold td, .active-scaffold th { padding: 0; }
 
 .active-scaffold a,
 .active-scaffold a:visited {
@@ -78,6 +79,7 @@ padding: 5px 5px;
 margin-left: 0px;
 }
 
+.active-scaffold .active-scaffold .active-scaffold-header div.actions .action_group > a,
 .active-scaffold .active-scaffold .active-scaffold-header div.actions > a {
 padding: 1px 5px;
 }
@@ -255,7 +257,7 @@ padding: 0;
 position: absolute;
 line-height: 200%;
 display: none;
-width: 150px;
+min-width: 150px;
 right: 0px;
 z-index: 2;
 }
@@ -399,6 +401,9 @@ font: bold 12px arial, sans-serif;
 padding: 3px 0px 2px 0px;
 border-bottom: none;
 font: bold 12px arial, sans-serif;
+}
+.active-scaffold .active-scaffold-footer > br {
+clear: both;
 }
 
 .active-scaffold-footer .active-scaffold-pagination {
@@ -711,6 +716,15 @@ padding: 1px;
 border: solid 1px;
 }
 
+.active-scaffold .refresh-link {
+display: inline-block;
+width: 25px;
+text-indent: 26px;
+overflow: hidden;
+background-position: 5px 50%;
+background-repeat: no-repeat;
+}
+
 .active-scaffold .checkbox-list {
 padding-left: 0px;
 }
@@ -722,6 +736,9 @@ display: inline;
 
 .active-scaffold .checkbox-list li label {
 padding: 0 0 0 2px;
+}
+.active-scaffold .checkbox-list + .refresh-link {
+float: left;
 }
 
 .active-scaffold .draggable-list {

@@ -34,6 +34,7 @@ module ActiveScaffold::Actions
     end
     def update_respond_to_html
       if params[:iframe]=='true' # was this an iframe post ?
+        do_refresh_list if successful? && active_scaffold_config.update.refresh_list && !render_parent?
         responds_to_parent do
           render :action => 'on_update', :formats => [:js], :layout => false
         end
@@ -52,10 +53,12 @@ module ActiveScaffold::Actions
           if update_refresh_list?
             do_refresh_list
           else
-            get_row
+            @updated_record = @record
+            # get_row so associations are cached like in list action
+            @record = get_row rescue nil # if record doesn't fullfil current conditions remove it from list
           end
         end
-        flash.now[:info] = as_(:updated_model, :model => @record.to_label) if active_scaffold_config.update.persistent
+        flash.now[:info] = as_(:updated_model, :model => (@updated_record || @record).to_label) if active_scaffold_config.update.persistent
       end
       render :action => 'on_update'
     end
@@ -101,7 +104,12 @@ module ActiveScaffold::Actions
       rescue ActiveRecord::StaleObjectError
         @record.errors.add(:base, as_(:version_inconsistency))
         self.successful = false
-      rescue ActiveRecord::RecordNotSaved
+      rescue ActiveRecord::RecordNotSaved => exception
+        logger.warn {
+          "\n\n#{exception.class} (#{exception.message}):\n    " +
+          Rails.backtrace_cleaner.clean(exception.backtrace).join("\n    ") +
+          "\n\n"
+        }
         @record.errors.add(:base, as_(:record_not_saved)) if @record.errors.empty?
         self.successful = false
       rescue ActiveRecord::ActiveRecordError => ex
@@ -157,6 +165,9 @@ module ActiveScaffold::Actions
     # You may override the method to customize.
     def update_authorized?(record = nil)
       (!nested? || !nested.readonly?) && (record || self).authorized_for?(:crud_type => :update)
+    end
+    def update_ignore?(record = nil)
+      !self.authorized_for?(:crud_type => :update)
     end
     private
     def update_authorized_filter
