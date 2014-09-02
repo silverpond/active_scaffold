@@ -197,7 +197,7 @@ module ActiveScaffold
         if value.is_a?(Hash)
           attributes_hash_is_empty?(value, klass)
         elsif value.is_a?(Array)
-          value.any? {|id| id.respond_to?(:empty?) ? !id.empty? : true}
+          value == [""] || value.any? {|id| id.respond_to?(:empty?) ? !id.empty? : true}
         else
           value.respond_to?(:empty?) ? value.empty? : false
         end
